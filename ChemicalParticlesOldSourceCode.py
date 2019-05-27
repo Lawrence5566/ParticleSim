@@ -1,7 +1,5 @@
 #to do list:
 
-#remember to remove git upload history 
-
 #2 implement energy - make sure particles speed isnt random, its dependant on how much energy they have
 #3 implement 2 different types of particles, make sure they are different colour etc
 #4 implement reactions, particles need enough energy to react, if they do react, bonds are formed, this is exothermic
