@@ -121,7 +121,7 @@ def DisplayHome():
     screen.fill(backgroundColour)
 
     #display "how many particles to simulate"#
-    title = arialFont.render("How many particles to simulate? (press return to confirm) ", True, BLACK)
+    title = arialFont.render("How many particles to simulate? (press return to start sim) ", True, BLACK)
     titleRect = title.get_rect()
     titleRect.center = (475,100)
 
