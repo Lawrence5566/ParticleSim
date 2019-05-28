@@ -1,19 +1,28 @@
 import math
 import pygame
 import random
+import particle as pp
+
+#Last run in python version 3.7.3 
+#for pygame version  1.9.5
 
 pygame.init()
 
-arialFont = pygame.font.SysFont('Arial', 35, True)    #for title questions
-arialFont2 = pygame.font.SysFont('Arial', 27, True)   #for buttons
-freesansboldFont = pygame.font.Font('freesansbold.ttf', 50) #for no.particle input
-textObj = pygame.font.Font('freesansbold.ttf', 25) #for sliders
+#fonts
+arialFont = pygame.font.SysFont('Arial', 35, True)              #for title questions
+arialFont2 = pygame.font.SysFont('Arial', 27, True)             #for buttons
+freesansboldFont = pygame.font.Font('freesansbold.ttf', 50)     #for no.particle input
+textObj = pygame.font.Font('freesansbold.ttf', 25)              #for sliders
+
+#Colours
 BLACK = 0,0,0
-YELLOW = (255,223,0) #golden yellow
+YELLOW = (255,223,0) #goldenYellow
 SILVER = 193,197,201
 RED = 255,0,0
 BLUE = 0,0,255
 PURPLE = 160,32,240
+
+#setup variables
 width, height = 1000, 600
 backgroundColour = 255,255,255
 screen = pygame.display.set_mode((width, height))
@@ -22,9 +31,10 @@ pygame.display.set_caption("Chemical Particles")
 TemperatureModifier = 1 #slider changes this number  bounds  between 0.1 and 10 (bounds of sliderX need to scale to this)
 PressureModifier = 1    
 allParticles = []
-e = 1    #if this number is 1, particles are 'perfect elastic particles'
+e = 1    #coeficient of restitution. If this number is 1, particles are 'perfect elastic particles' (as per hooks law)
 
-def CalculateCollision(p1, p2, e):
+
+def CalculateCollision(p1, p2, e): #calculate collision given two particles
     p1FinalVect = [0,0]
     p2FinalVect = [0,0]
 
@@ -54,8 +64,6 @@ def collide(p1, p2):
         p2.x -= math.sin(angle)
         p2.y += math.cos(angle)
 
-
-
 def react(p1, p2):
     dx = p1.x - p2.x #difference in x cordinates
     dy = p1.y - p2.y
@@ -64,7 +72,7 @@ def react(p1, p2):
     if dist < p1.radius + p2.radius: 
         if p1.energy > activationEnergy and p2.energy > activationEnergy and p1.canReact == 1 and p2.canReact == 1:
             if p1.atomType != p2.atomType:      #makes sure hydrogen and hydrogen cant react together (for example)
-                particle = Particle()
+                particle = pp.Particle(energyOfSystem, no_particles)
 
                 bondEnergy = 0.464 #bond energy of H-O # temporaray while bond enthalpys are being made
 
@@ -90,7 +98,7 @@ def react(p1, p2):
                 if particle.y < particle.radius + 25:  #Top
                     particle.y += particle.radius
 
-                p1speedvect,p2speedvect = CalculateCollision(p1,p2, 0)  #e is 0 so that particles come together, (uses tempoary variables), p1speedvect=p2speedvect
+                p1speedvect,p2speedvect = CalculateCollision(p1,p2,0)  #e is 0 so that particles come together, (uses tempoary variables), p1speedvect=p2speedvect
                 
                 particle.speedVect[0] =  p1speedvect[0]
                 particle.speedVect[1] =  p1speedvect[1]
@@ -106,49 +114,8 @@ def react(p1, p2):
     else:
         return
 
-
-class Particle():   
-    def __init__(self):
-        self.mass = 5  
-        self.radius = 10
-        self.energy = energyOfSystem/no_particles
-        self.alive = 1
-        self.speedVect = [0,0]
-
-    def bounce(self):      #for bouncing off sides of screen
-        if self.x >= width - self.radius - 400: #Right     #400 is for extra space to keep sliders at right side of screen 
-            self.speedVect[0] = -self.speedVect[0]
-            while self.x >= width - self.radius - 400:
-                self.move()
-      
-        elif self.x <= self.radius + 25:  #Left
-            self.speedVect[0] = -self.speedVect[0]
-            while self.x <= self.radius + 25:
-                self.move()
-
-        if self.y >= height - self.radius -25: #Bottom
-            self.speedVect[1] = -self.speedVect[1]
-            while self.y >= height - self.radius -25:
-                self.move()
-            
-        elif self.y <= self.radius + 25:  #Top
-            self.speedVect[1] = -self.speedVect[1]
-            while self.y <= self.radius + 25:
-                self.move()
-
-            
-    def display(self):
-        pygame.draw.circle(screen, self.colour, (int(self.x), int(self.y)), self.radius, 2)
-
-    def move(self):
-        Xvelocity = self.speedVect[0] * TemperatureModifier * PressureModifier
-        Yvelocity = self.speedVect[1] * TemperatureModifier * PressureModifier
-        self.x += Xvelocity 
-        self.y -= Yvelocity
-
-        self.speed = math.sqrt((Xvelocity**2) + (Yvelocity**2))#works out the maginitude of the vector
-        self.energy = 1/2*self.mass*(self.speed**2) #uses kinetic energy equation
-        
+## UI&Menu functions ##
+    
 def DisplayHome():
     homeScreen = [1,1]
     screen.fill(backgroundColour)
@@ -242,48 +209,6 @@ def DisplayHome():
 
     return TextValue,buttonClicked
 
-### ###
-no_particles,activationLevel = DisplayHome()
-### ###
-
-no_particles = int(no_particles)
-energyOfSystem = no_particles*0.1 #gives particles an energy of 0.1 (MJ/mol)  #energyOfSingleParticle = energyOfSystem/no_particles = 0.1
-print (activationLevel)
-if activationLevel == "low":    #requires no increase in temp/pressure
-    activationEnergy = (energyOfSystem/no_particles)*2.3 #takes energy of system / no. of particles to find each particles individual starting energy and sets it to x2.3
-elif activationLevel == "med":  #requires a small increase in temp/pressure
-    activationEnergy = (energyOfSystem/no_particles)*30  #sets it x30 
-else: #(high)                   #requires a large increase in temp/pressure
-    activationEnergy = (energyOfSystem/no_particles)*100  #sets it x100 #particles require a lot higher temp/pressure
-
-FirstAtom = ("H",RED)   #contains atom type and colour 
-no_FirstAtoms = int(no_particles/2)     #int the number to round it to the nearest whole integer
-SecondAtom = ("O",BLUE)
-no_SecondAtoms = (no_particles - no_FirstAtoms)
-
-for n in range(no_particles): #CREATING PARTICLES
-    particle = Particle()
-    
-    particle.canReact = 1  
-    speed = ((2*particle.energy)/particle.mass)**0.5
-    
-    particle.speedVect[0] = random.choice([speed,-speed]) #picks between negative or positive direction
-    particle.speedVect[1] = random.choice([speed,-speed])
-    particle.x = random.randint(particle.radius + 25, width - particle.radius - 400)    #gives the particle a random x and y coord in the box
-    particle.y = random.randint(particle.radius + 25, height - particle.radius - 25)
-
-    if no_FirstAtoms != 0:
-        particle.atomType = FirstAtom[0]
-        particle.colour = FirstAtom[1]
-        no_FirstAtoms -= 1
-    else:
-        particle.atomType = SecondAtom[0]
-        particle.colour = SecondAtom[1]
-
-    allParticles.append(particle)
-    
-clickingTempSlider = False
-
 def DisplayGUI(TempSlider,TempSliderX,PressureSlider,PressureSliderX,clickingTemp,clickingPress):
     screen.fill(backgroundColour)
 
@@ -325,12 +250,56 @@ def DisplayGUI(TempSlider,TempSliderX,PressureSlider,PressureSliderX,clickingTem
 
     return TempSlider,TempSliderX,PressureSlider,PressureSliderX
 
+### Start setup ###
+
+no_particles, activationLevel = DisplayHome()
+
+no_particles = int(no_particles)
+energyOfSystem = no_particles*0.1 #gives particles an energy of 0.1 (MJ/mol)  #energyOfSingleParticle = energyOfSystem/no_particles = 0.1
+print (activationLevel)
+if activationLevel == "low":    #requires no increase in temp/pressure
+    activationEnergy = (energyOfSystem/no_particles)*2.3 #takes energy of system / no. of particles to find each particles individual starting energy and sets it to x2.3
+elif activationLevel == "med":  #requires a small increase in temp/pressure
+    activationEnergy = (energyOfSystem/no_particles)*30  #sets it x30 
+else: #(high)                   #requires a large increase in temp/pressure
+    activationEnergy = (energyOfSystem/no_particles)*100  #sets it x100 #particles require a lot higher temp/pressure
+
+FirstAtom = ("H",RED)   #contains atom type and colour 
+no_FirstAtoms = int(no_particles/2)     #int the number to round it to the nearest whole integer
+SecondAtom = ("O",BLUE)
+no_SecondAtoms = (no_particles - no_FirstAtoms)
+
+for n in range(no_particles): #CREATING PARTICLES
+    particle = pp.Particle(energyOfSystem, no_particles)
+    
+    particle.canReact = 1  
+    speed = ((2*particle.energy)/particle.mass)**0.5
+    
+    particle.speedVect[0] = random.choice([speed,-speed]) #picks between negative or positive direction
+    particle.speedVect[1] = random.choice([speed,-speed])
+    particle.x = random.randint(particle.radius + 25, width - particle.radius - 400)    #gives the particle a random x and y coord in the box
+    particle.y = random.randint(particle.radius + 25, height - particle.radius - 25)
+
+    if no_FirstAtoms != 0:
+        particle.atomType = FirstAtom[0]
+        particle.colour = FirstAtom[1]
+        no_FirstAtoms -= 1
+    else:
+        particle.atomType = SecondAtom[0]
+        particle.colour = SecondAtom[1]
+
+    allParticles.append(particle)
+    
+clickingTempSlider = False
+
 TempSlider = pygame.draw.polygon(screen, YELLOW, [(800,300),(800,320),(830,320),(830,300)])
 PressureSlider = pygame.draw.polygon(screen, YELLOW, [(800,450),(800,470),(830,470),(830,450)])
 TempSliderX = 802.5     #TempSliderX should change the temperature, 802.5 is the 'middle' value, and ranges between 670 - 935
 PressureSliderX = 802.5
 
 clickingTemp,clickingPress = False,False
+
+#Main Loop#
 
 while True:
     TempSlider,TempSliderX, PressureSlider, PressureSliderX = DisplayGUI(TempSlider,TempSliderX,PressureSlider,PressureSliderX,clickingTemp,clickingPress)
@@ -354,15 +323,15 @@ while True:
             
     for i,particle in enumerate(allParticles):
         if particle.alive == 1:
-            particle.move()
-            particle.bounce()
+            particle.move(TemperatureModifier, PressureModifier)
+            particle.bounce(width, height, TemperatureModifier, PressureModifier)
             for particle2 in allParticles[i+1:]:
                 if particle2.alive == 1:
                     react(particle, particle2)      #needs to be first
                     collide(particle, particle2)
                 else:
                     continue
-            particle.display()
+            pygame.draw.circle(screen, particle.colour, (int(particle.x), int(particle.y)), particle.radius, 2) #display particle
         else:
             continue
 
